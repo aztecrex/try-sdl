@@ -1,10 +1,11 @@
 CFLAGS += $(shell sdl2-config --cflags)
 CXXFLAGS += $(shell sdl2-config --cflags)
-LDFLAGS += $(shell sdl2-config --libs)
-SAMPLES = 01 02 03 04 05
+LDFLAGS += $(shell sdl2-config --libs) -lSDL2_image
+SAMPLES = 01 02 03 04 05 06
+EXECS = $(SAMPLES:%=run_%)
 
 .PHONY: all
-all: $(SAMPLES)
+all: $(EXECS)
 
-$(SAMPLES): %: %.o
+$(EXECS): run_%: %.o
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
