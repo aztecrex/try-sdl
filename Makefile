@@ -1,11 +1,11 @@
 CFLAGS += $(shell sdl2-config --cflags)
+CXXFLAGS += $(shell sdl2-config --cflags)
 LDFLAGS += $(shell sdl2-config --libs)
-OBJS = trysdl.o
+SAMPLES = 01 02
 
 .PHONY: all
-all: trysdl
+all: $(SAMPLES)
 
-trysdl: $(OBJS)
+$(SAMPLES): %: %.o
 	cc -o $@ $^ $(CFLAGS) $(LDFLAGS)
-
 
