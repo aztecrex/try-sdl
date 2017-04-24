@@ -1,7 +1,7 @@
 CFLAGS += $(shell sdl2-config --cflags)
 CXXFLAGS += $(shell sdl2-config --cflags)
 LDFLAGS += $(shell sdl2-config --libs) -lSDL2_image
-SAMPLES = 01 02 03 04 05 06 07 08 09 10 11
+SAMPLES = 01 02 03 04 05 06 07 08 09 10 11 12
 EXECS = $(SAMPLES:%=run_%)
 
 .PHONY: all
@@ -14,5 +14,3 @@ $(EXECS): run_%: %.o
 clean:
 	rm -f *.o
 	rm -f run_*
-
-
