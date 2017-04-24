@@ -9,3 +9,10 @@ all: $(EXECS)
 
 $(EXECS): run_%: %.o
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS)
+
+.PHONY: clean
+clean:
+	rm -f *.o
+	rm -f run_*
+
+
