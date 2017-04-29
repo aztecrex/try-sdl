@@ -54,6 +54,7 @@ class LTexture
 		bool unlockTexture();
 		void* getPixels();
 		int getPitch();
+		Uint32 getPixelFormat();
 
 	private:
 		//The actual hardware texture
@@ -64,6 +65,9 @@ class LTexture
 		//Image dimensions
 		int mWidth;
 		int mHeight;
+
+		// pixel format
+		Uint32 mPixelFormat;
 };
 
 //Starts up SDL and creates window
@@ -103,14 +107,12 @@ LTexture::~LTexture()
 bool LTexture::loadFromFile( std::string path )
 {
 	//Get rid of preexisting texture
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	free();
 
 	//The final texture
 	SDL_Texture* newTexture = NULL;
 
 	//Load image at specified path
-	std::cout << __FILE__ << " " << __LINE__ << std::endl;
 	SDL_Surface* loadedSurface = IMG_Load( path.c_str() );
 	if( loadedSurface == NULL )
 	{
@@ -119,16 +121,8 @@ bool LTexture::loadFromFile( std::string path )
 	else
 	{
 		//Convert surface to display format
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 
-		SDL_Surface* windowSurface = SDL_GetWindowSurface( gWindow );
-		if (!windowSurface) {
-			std::cout << "unable to get window surface: " << SDL_GetError() << std::endl;
-		}
-		std::cout << "window: " << gWindow << std::endl;
-		std::cout << "window surface: " << SDL_GetWindowSurface( gWindow ) << std::endl;
-		std::cout << "window surface format: " << SDL_GetWindowSurface( gWindow )->format << std::endl;
-	SDL_Surface* formattedSurface = SDL_ConvertSurface( loadedSurface, SDL_GetWindowSurface( gWindow )->format, 0 );
+  	SDL_Surface* formattedSurface = SDL_ConvertSurfaceFormat( loadedSurface, SDL_GetWindowPixelFormat( gWindow ), 0 );
 		if( formattedSurface == NULL )
 		{
 			printf( "Unable to convert loaded surface to display format! SDL Error: %s\n", SDL_GetError() );
@@ -136,40 +130,36 @@ bool LTexture::loadFromFile( std::string path )
 		else
 		{
 			//Create blank streamable texture
-			newTexture = SDL_CreateTexture( gRenderer, SDL_GetWindowPixelFormat( gWindow ), SDL_TEXTUREACCESS_STREAMING, formattedSurface->w, formattedSurface->h );
+			mPixelFormat = SDL_GetWindowPixelFormat( gWindow );
+			newTexture = SDL_CreateTexture( gRenderer, mPixelFormat, SDL_TEXTUREACCESS_STREAMING, formattedSurface->w, formattedSurface->h );
 			if( newTexture == NULL )
 			{
 				printf( "Unable to create blank texture! SDL Error: %s\n", SDL_GetError() );
 			}
 			else
 			{
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				//Lock texture for manipulation
 				SDL_LockTexture( newTexture, NULL, &mPixels, &mPitch );
 
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				//Copy loaded/formatted surface pixels
 				memcpy( mPixels, formattedSurface->pixels, formattedSurface->pitch * formattedSurface->h );
 
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				//Unlock texture to update
 				SDL_UnlockTexture( newTexture );
 				mPixels = NULL;
 
-				std::cout << __FILE__ << " " << __LINE__ << std::endl;
 				//Get image dimensions
 				mWidth = formattedSurface->w;
 				mHeight = formattedSurface->h;
 			}
 
-			std::cout << __FILE__ << " " << __LINE__ << std::endl;
 			//Get rid of old formatted surface
 			SDL_FreeSurface( formattedSurface );
 		}
 
-		std::cout << __FILE__ << " " << __LINE__ << std::endl;
 		//Get rid of old loaded surface
 		SDL_FreeSurface( loadedSurface );
+
 	}
 
 	//Return success
@@ -272,6 +262,9 @@ int LTexture::getHeight()
 	return mHeight;
 }
 
+Uint32 LTexture::getPixelFormat() {
+	return mPixelFormat;
+}
 bool LTexture::lockTexture()
 {
 	bool success = true;
@@ -406,17 +399,26 @@ bool loadMedia()
 			int pixelCount = ( gFooTexture.getPitch() / 4 ) * gFooTexture.getHeight();
 
 			//Map colors
-			Uint32 colorKey = SDL_MapRGB( SDL_GetWindowSurface( gWindow )->format, 0, 0xFF, 0xFF );
-			Uint32 transparent = SDL_MapRGBA( SDL_GetWindowSurface( gWindow )->format, 0xFF, 0xFF, 0xFF, 0x00 );
+			SDL_PixelFormat *format = SDL_AllocFormat(gFooTexture.getPixelFormat());
+			// printf("format: %lx\n", (unsigned long) format->format);
+			Uint32 colorKey = SDL_MapRGB( format, 0, 0xFF, 0xFF );
+			Uint32 transparent = SDL_MapRGBA( format, 0xFF, 0xFF, 0xFF, 0x00 );
+			// printf("color: %lx\n", (unsigned long) colorKey);
+			// printf("transparent: %lx\n", (unsigned long) transparent);
+			// std::cout << "here" << std::endl;
+			// std::cout << "color: " << colorKey << " transparent: " << transparent << std::endl;
 
 			//Color key pixels
+			// std::cout << "here" << std::endl;
 			for( int i = 0; i < pixelCount; ++i )
 			{
+				// printf("%lx ", (unsigned long) pixels[i]);
 				if( pixels[ i ] == colorKey )
 				{
 					pixels[ i ] = transparent;
 				}
 			}
+			// printf("\n");
 
 			//Unlock texture
 			gFooTexture.unlockTexture();
